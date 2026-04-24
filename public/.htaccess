@@ -1,0 +1,12 @@
+Options -MultiViews
+RewriteEngine On
+
+# Don't rewrite actual files or directories
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Don't rewrite API calls (proxied to Node.js)
+RewriteCond %{REQUEST_URI} !^/api/
+
+# Send everything else to index.html
+RewriteRule ^ index.html [L]
