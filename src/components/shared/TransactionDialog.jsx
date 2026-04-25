@@ -5,6 +5,9 @@ import {
   Select, ToggleButtonGroup, ToggleButton, Box, Typography,
   InputAdornment, Stack,
 } from '@mui/material'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { createTransaction, updateTransaction, getCategories, getAccounts } from '../../api'
 import dayjs from 'dayjs'
 
@@ -71,111 +74,113 @@ export default function TransactionDialog({ open, onClose, transaction, onSaved 
   }
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
-      PaperProps={{ sx: { borderRadius: 3 } }}>
-      <DialogTitle sx={{ pb: 1 }}>
-        {transaction ? 'Edit Transaction' : 'Add Transaction'}
-      </DialogTitle>
-      <DialogContent>
-        <Stack spacing={2.5} sx={{ pt: 1 }}>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ pb: 1 }}>
+          {transaction ? 'Edit Transaction' : 'Add Transaction'}
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={2.5} sx={{ pt: 1 }}>
 
-          {/* Type */}
-          <Box>
-            <Typography variant="caption" color="text.secondary" mb={0.5} display="block">
-              Type
-            </Typography>
-            <ToggleButtonGroup
-              value={form.type} exclusive size="small"
-              onChange={(_, v) => v && set('type', v)}
-              fullWidth
-            >
-              <ToggleButton value="income">Income</ToggleButton>
-              <ToggleButton value="expense">Expense</ToggleButton>
-              <ToggleButton value="transfer">Transfer</ToggleButton>
-            </ToggleButtonGroup>
-          </Box>
-
-          {/* Scope — only for expenses */}
-          {form.type === 'expense' && (
+            {/* Type */}
             <Box>
               <Typography variant="caption" color="text.secondary" mb={0.5} display="block">
-                Who is this for?
+                Type
               </Typography>
               <ToggleButtonGroup
-                value={form.scope} exclusive size="small"
-                onChange={(_, v) => v && set('scope', v)}
+                value={form.type} exclusive size="small"
+                onChange={(_, v) => v && set('type', v)}
                 fullWidth
               >
-                <ToggleButton value="shared">🏠 Household</ToggleButton>
-                <ToggleButton value="personal">👤 Personal</ToggleButton>
+                <ToggleButton value="income">Income</ToggleButton>
+                <ToggleButton value="expense">Expense</ToggleButton>
+                <ToggleButton value="transfer">Transfer</ToggleButton>
               </ToggleButtonGroup>
             </Box>
-          )}
 
-          {/* Amount */}
-          <TextField
-            label="Amount" type="number" value={form.amount}
-            onChange={e => set('amount', e.target.value)}
-            InputProps={{
-              startAdornment: <InputAdornment position="start">$</InputAdornment>,
-            }}
-            fullWidth
-          />
+            {/* Scope — only for expenses */}
+            {form.type === 'expense' && (
+              <Box>
+                <Typography variant="caption" color="text.secondary" mb={0.5} display="block">
+                  Who is this for?
+                </Typography>
+                <ToggleButtonGroup
+                  value={form.scope} exclusive size="small"
+                  onChange={(_, v) => v && set('scope', v)}
+                  fullWidth
+                >
+                  <ToggleButton value="shared">🏠 Household</ToggleButton>
+                  <ToggleButton value="personal">👤 Personal</ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+            )}
 
-          {/* Description */}
-          <TextField
-            label="Description" value={form.description}
-            onChange={e => set('description', e.target.value)}
-            fullWidth
-          />
+            {/* Amount */}
+            <TextField
+              label="Amount" type="number" value={form.amount}
+              onChange={e => set('amount', e.target.value)}
+              InputProps={{
+                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+              }}
+              fullWidth
+            />
 
-          {/* Date */}
-          <TextField
-            label="Date" type="date" value={form.date}
-            onChange={e => set('date', e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            fullWidth
-          />
+            {/* Description */}
+            <TextField
+              label="Description" value={form.description}
+              onChange={e => set('description', e.target.value)}
+              fullWidth
+            />
 
-          {/* Account */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Account</InputLabel>
-            <Select value={form.account_id} label="Account"
-              onChange={e => set('account_id', e.target.value)}>
-              {accounts.map(a => (
-                <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+            {/* Date */}
+            <DatePicker
+              label="Date"
+              value={form.date ? dayjs(form.date) : null}
+              onChange={(value) => set('date', value ? value.format('YYYY-MM-DD') : '')}
+              slotProps={{ textField: { fullWidth: true } }}
+            />
 
-          {/* Category */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Category</InputLabel>
-            <Select value={form.category_id} label="Category"
-              onChange={e => set('category_id', e.target.value)}>
-              <MenuItem value=""><em>None</em></MenuItem>
-              {filteredCategories.map(c => (
-                <MenuItem key={c.id} value={c.id}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: c.color }} />
-                    {c.name}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+            {/* Account */}
+            <FormControl fullWidth size="small">
+              <InputLabel>Account</InputLabel>
+              <Select value={form.account_id} label="Account"
+                onChange={e => set('account_id', e.target.value)}>
+                {accounts.map(a => (
+                  <MenuItem key={a.id} value={a.id}>{a.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          {error && (
-            <Typography color="error" variant="caption">{error}</Typography>
-          )}
-        </Stack>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleSave} disabled={saving}>
-          {saving ? 'Saving…' : 'Save'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+            {/* Category */}
+            <FormControl fullWidth size="small">
+              <InputLabel>Category</InputLabel>
+              <Select value={form.category_id} label="Category"
+                onChange={e => set('category_id', e.target.value)}>
+                <MenuItem value=""><em>None</em></MenuItem>
+                {filteredCategories.map(c => (
+                  <MenuItem key={c.id} value={c.id}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: c.color }} />
+                      {c.name}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {error && (
+              <Typography color="error" variant="caption">{error}</Typography>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="contained" onClick={handleSave} disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </LocalizationProvider>
   )
 }

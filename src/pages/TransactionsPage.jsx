@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import {
   Box, Typography, Card, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton,
-  Button, Stack, TextField, MenuItem, Select, FormControl,
-  InputLabel, ToggleButtonGroup, ToggleButton, Avatar,
+  Button, ToggleButtonGroup, ToggleButton, Avatar,
   Skeleton, Tooltip,
 } from '@mui/material'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
@@ -46,125 +48,135 @@ export default function TransactionsPage() {
   const handleAdd  = () => { setEditing(null); setDialogOpen(true) }
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1100, mx: 'auto' }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" fontWeight={600}>Transactions</Typography>
-        <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={handleAdd} size="small">
-          Add
-        </Button>
-      </Box>
-
-      {/* Filters */}
-      <Card sx={{ mb: 2.5 }}>
-        <Box sx={{ p: 2, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
-          <ToggleButtonGroup value={view} exclusive size="small"
-            onChange={(_, v) => v && setView(v)}>
-            <ToggleButton value="household">🏠 Household</ToggleButton>
-            <ToggleButton value="personal">👤 Mine</ToggleButton>
-            <ToggleButton value="all">All</ToggleButton>
-          </ToggleButtonGroup>
-          <TextField label="From" type="date" size="small" value={from}
-            onChange={e => setFrom(e.target.value)} InputLabelProps={{ shrink: true }} />
-          <TextField label="To" type="date" size="small" value={to}
-            onChange={e => setTo(e.target.value)} InputLabelProps={{ shrink: true }} />
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1100, mx: 'auto' }}>
+        {/* Header */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5" fontWeight={600}>Transactions</Typography>
+          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={handleAdd} size="small">
+            Add
+          </Button>
         </Box>
-      </Card>
 
-      {/* Table */}
-      <Card>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Scope</TableCell>
-                <TableCell>Added by</TableCell>
-                <TableCell align="right">Amount</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading
-                ? Array.from({ length: 8 }).map((_, i) => (
-                    <TableRow key={i}>
-                      {Array.from({ length: 7 }).map((_, j) => (
-                        <TableCell key={j}><Skeleton /></TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                : transactions.length === 0
-                  ? <TableRow>
-                      <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
-                        No transactions found
-                      </TableCell>
-                    </TableRow>
-                  : transactions.map(tx => (
-                      <TableRow key={tx.id} hover>
-                        <TableCell sx={{ color: 'text.secondary', fontSize: 13 }}>
-                          {dayjs(tx.date).format('MMM D')}
-                        </TableCell>
-                        <TableCell sx={{ maxWidth: 200 }}>
-                          <Typography variant="body2" noWrap>
-                            {tx.description || '—'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          {tx.category_name
-                            ? <Chip label={tx.category_name} size="small"
-                                sx={{ bgcolor: tx.category_color + '22', color: tx.category_color,
-                                  fontWeight: 500, fontSize: 11, border: `1px solid ${tx.category_color}44` }} />
-                            : <Typography variant="caption" color="text.disabled">—</Typography>}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={tx.scope === 'shared' ? '🏠 Shared' : '👤 Personal'}
-                            size="small" variant="outlined"
-                            sx={{ fontSize: 11 }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                            <Avatar sx={{ width: 20, height: 20, fontSize: 10, bgcolor: 'primary.main' }}>
-                              {tx.created_by_name?.[0]}
-                            </Avatar>
-                            <Typography variant="caption">{tx.created_by_name}</Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2" fontWeight={500}
-                            color={tx.type === 'income' ? 'success.main' : 'error.main'}>
-                            {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Tooltip title="Edit">
-                            <IconButton size="small" onClick={() => handleEdit(tx)}>
-                              <EditRoundedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete">
-                            <IconButton size="small" color="error" onClick={() => handleDelete(tx.id)}>
-                              <DeleteRoundedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
+        {/* Filters */}
+        <Card sx={{ mb: 2.5 }}>
+          <Box sx={{ p: 2, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+            <ToggleButtonGroup value={view} exclusive size="small"
+              onChange={(_, v) => v && setView(v)}>
+              <ToggleButton value="household">🏠 Household</ToggleButton>
+              <ToggleButton value="personal">👤 Mine</ToggleButton>
+              <ToggleButton value="all">All</ToggleButton>
+            </ToggleButtonGroup>
+            <DatePicker
+              label="From"
+              value={from ? dayjs(from) : null}
+              onChange={(value) => setFrom(value ? value.format('YYYY-MM-DD') : '')}
+              slotProps={{ textField: { size: 'small' } }}
+            />
+            <DatePicker
+              label="To"
+              value={to ? dayjs(to) : null}
+              onChange={(value) => setTo(value ? value.format('YYYY-MM-DD') : '')}
+              slotProps={{ textField: { size: 'small' } }}
+            />
+          </Box>
+        </Card>
+
+        {/* Table */}
+        <Card>
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Scope</TableCell>
+                  <TableCell>Added by</TableCell>
+                  <TableCell align="right">Amount</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {loading
+                  ? Array.from({ length: 8 }).map((_, i) => (
+                      <TableRow key={i}>
+                        {Array.from({ length: 7 }).map((_, j) => (
+                          <TableCell key={j}><Skeleton /></TableCell>
+                        ))}
                       </TableRow>
                     ))
-              }
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
+                  : transactions.length === 0
+                    ? <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 6, color: 'text.secondary' }}>
+                          No transactions found
+                        </TableCell>
+                      </TableRow>
+                    : transactions.map(tx => (
+                        <TableRow key={tx.id} hover>
+                          <TableCell sx={{ color: 'text.secondary', fontSize: 13 }}>
+                            {dayjs(tx.date).format('MMM D')}
+                          </TableCell>
+                          <TableCell sx={{ maxWidth: 200 }}>
+                            <Typography variant="body2" noWrap>
+                              {tx.description || '—'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            {tx.category_name
+                              ? <Chip label={tx.category_name} size="small"
+                                  sx={{ bgcolor: tx.category_color + '22', color: tx.category_color,
+                                    fontWeight: 500, fontSize: 11, border: `1px solid ${tx.category_color}44` }} />
+                              : <Typography variant="caption" color="text.disabled">—</Typography>}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={tx.scope === 'shared' ? '🏠 Shared' : '👤 Personal'}
+                              size="small" variant="outlined"
+                              sx={{ fontSize: 11 }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                              <Avatar sx={{ width: 20, height: 20, fontSize: 10, bgcolor: 'primary.main' }}>
+                                {tx.created_by_name?.[0]}
+                              </Avatar>
+                              <Typography variant="caption">{tx.created_by_name}</Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" fontWeight={500}
+                              color={tx.type === 'income' ? 'success.main' : 'error.main'}>
+                              {tx.type === 'income' ? '+' : '-'}{fmt(tx.amount)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Tooltip title="Edit">
+                              <IconButton size="small" onClick={() => handleEdit(tx)}>
+                                <EditRoundedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete">
+                              <IconButton size="small" color="error" onClick={() => handleDelete(tx.id)}>
+                                <DeleteRoundedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                }
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Card>
 
-      <TransactionDialog
-        open={dialogOpen}
-        onClose={() => { setDialogOpen(false); setEditing(null) }}
-        transaction={editing}
-        onSaved={load}
-      />
-    </Box>
+        <TransactionDialog
+          open={dialogOpen}
+          onClose={() => { setDialogOpen(false); setEditing(null) }}
+          transaction={editing}
+          onSaved={load}
+        />
+      </Box>
+    </LocalizationProvider>
   )
 }
