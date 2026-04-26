@@ -1,16 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Box, Grid, Card, CardContent, Typography, Skeleton,
   ToggleButtonGroup, ToggleButton, Avatar, LinearProgress,
-  Chip, Stack, Button,
+  Stack, Button, Tabs, Tab,
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
-import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded'
-import TrendingDownRoundedIcon from '@mui/icons-material/TrendingDownRounded'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { useSummary } from '../hooks/useSummary'
+import { getTransactions } from '../api'
 import TransactionDialog from '../components/shared/TransactionDialog'
 import dayjs from 'dayjs'
 
@@ -18,18 +17,7 @@ const fmt = (n) => new Intl.NumberFormat('en-CA', {
   style: 'currency', currency: 'CAD', maximumFractionDigits: 0,
 }).format(n || 0)
 
-function MonthPicker({ value, onChange }) {
-  return (
-    <TextField
-      type="month" size="small" value={value}
-      onChange={e => onChange(e.target.value)}
-      sx={{ width: 160 }}
-      inputProps={{ max: dayjs().format('YYYY-MM') }}
-    />
-  )
-}
-
-function SummaryCard({ label, value, delta, color, loading }) {
+function SummaryCard({ label, value, color, loading }) {
   return (
     <Card>
       <CardContent>
@@ -46,15 +34,64 @@ function SummaryCard({ label, value, delta, color, loading }) {
   )
 }
 
+function CategoryPieChart({ data, loading, emptyMessage }) {
+  if (loading) return <Skeleton variant="circular" width={200} height={200} sx={{ mx: 'auto', mt: 2 }} />
+  if (!data?.length) return (
+    <Box sx={{ py: 6, textAlign: 'center' }}>
+      <Typography color="text.secondary" variant="body2">{emptyMessage}</Typography>
+    </Box>
+  )
+  return (
+    <ResponsiveContainer width="100%" height={260}>
+      <PieChart>
+        <Pie data={data} cx="50%" cy="50%" innerRadius={60} outerRadius={100}
+          dataKey="value" paddingAngle={2}>
+          {data.map((entry, i) => (
+            <Cell key={i} fill={entry.color} />
+          ))}
+        </Pie>
+        <Tooltip formatter={(v) => fmt(v)} />
+        <Legend iconType="circle" iconSize={8}
+          formatter={(value) => <span style={{ fontSize: 12 }}>{value}</span>} />
+      </PieChart>
+    </ResponsiveContainer>
+  )
+}
+
 export default function DashboardPage() {
-  const [view, setView]   = useState('household')
-  const [month, setMonth] = useState(dayjs().format('YYYY-MM'))
-  const [txOpen, setTxOpen] = useState(false)
-  const [refresh, setRefresh] = useState(0)
+  const [view, setView]       = useState('household')
+  const [month, setMonth]     = useState(dayjs().format('YYYY-MM'))
+  const [txOpen, setTxOpen]   = useState(false)
+  const [chartTab, setChartTab] = useState(0)
+  const [incomeByCategory, setIncomeByCategory] = useState([])
+  const [incomeLoading, setIncomeLoading]         = useState(true)
 
   const { data, loading } = useSummary(view, month)
 
-  const pieData = (data?.by_category || [])
+  // Fetch income by category separately
+  useEffect(() => {
+    setIncomeLoading(true)
+    const from = `${month}-01`
+    const to   = dayjs(from).endOf('month').format('YYYY-MM-DD')
+    getTransactions({ view: view === 'personal' ? 'personal' : 'household', from, to, limit: 200 })
+      .then(r => {
+        // Group income transactions by category
+        const map = {}
+        r.data
+          .filter(t => t.type === 'income')
+          .forEach(t => {
+            const key   = t.category_name || 'Uncategorised'
+            const color = t.category_color || '#888780'
+            if (!map[key]) map[key] = { name: key, value: 0, color }
+            map[key].value += parseFloat(t.amount)
+          })
+        setIncomeByCategory(Object.values(map))
+      })
+      .catch(console.error)
+      .finally(() => setIncomeLoading(false))
+  }, [view, month])
+
+  const spendingPieData = (data?.by_category || [])
     .filter(c => c.total > 0)
     .map(c => ({ name: c.name, value: parseFloat(c.total), color: c.color }))
 
@@ -100,80 +137,83 @@ export default function DashboardPage() {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {view === 'household' && <>
           <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard label="Pooled Income" value={data?.pooled_income} color="success.main" loading={loading} />
+            <SummaryCard label="Pooled Income"    value={data?.pooled_income}    color="success.main" loading={loading} />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard label="Shared Expenses" value={data?.shared_expenses} color="error.main" loading={loading} />
+            <SummaryCard label="Shared Expenses"  value={data?.shared_expenses}  color="error.main"   loading={loading} />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard label="Allocations" value={data?.total_allocations} color="warning.main" loading={loading} />
+            <SummaryCard label="Allocations"      value={data?.total_allocations} color="warning.main" loading={loading} />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard label="Remainder" value={data?.remainder} color={data?.remainder >= 0 ? 'success.main' : 'error.main'} loading={loading} />
+            <SummaryCard label="Remainder"
+              value={data?.remainder}
+              color={data?.remainder >= 0 ? 'success.main' : 'error.main'}
+              loading={loading} />
           </Grid>
         </>}
-
         {view === 'personal' && <>
           <Grid item xs={12} sm={4}>
-            <SummaryCard label="Monthly Fund" value={data?.fund_amount} color="primary.main" loading={loading} />
+            <SummaryCard label="Monthly Fund"  value={data?.fund_amount}    color="primary.main" loading={loading} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <SummaryCard label="Spent" value={data?.fund_spent} color="error.main" loading={loading} />
+            <SummaryCard label="Spent"         value={data?.fund_spent}     color="error.main"   loading={loading} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <SummaryCard label="Remaining" value={data?.fund_remaining} color={data?.fund_remaining >= 0 ? 'success.main' : 'error.main'} loading={loading} />
+            <SummaryCard label="Remaining"
+              value={data?.fund_remaining}
+              color={data?.fund_remaining >= 0 ? 'success.main' : 'error.main'}
+              loading={loading} />
           </Grid>
         </>}
-
         {view === 'full' && <>
           <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard label="Total Income" value={data?.total_income} color="success.main" loading={loading} />
+            <SummaryCard label="Total Income"      value={data?.total_income}      color="success.main" loading={loading} />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard label="Shared Expenses" value={data?.shared_expenses} color="warning.main" loading={loading} />
+            <SummaryCard label="Shared Expenses"   value={data?.shared_expenses}   color="warning.main" loading={loading} />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard label="Personal Expenses" value={data?.personal_expenses} color="error.main" loading={loading} />
+            <SummaryCard label="Personal Expenses" value={data?.personal_expenses} color="error.main"   loading={loading} />
           </Grid>
           <Grid item xs={12} sm={6} md={3}>
-            <SummaryCard label="Net" value={data?.net} color={data?.net >= 0 ? 'success.main' : 'error.main'} loading={loading} />
+            <SummaryCard label="Net"
+              value={data?.net}
+              color={data?.net >= 0 ? 'success.main' : 'error.main'}
+              loading={loading} />
           </Grid>
         </>}
       </Grid>
 
       <Grid container spacing={2}>
-        {/* Pie chart */}
+        {/* Charts card with tabs */}
         <Grid item xs={12} md={5}>
           <Card sx={{ height: '100%' }}>
             <CardContent>
-              <Typography variant="subtitle1" fontWeight={500} gutterBottom>
-                Spending by Category
-              </Typography>
-              {loading
-                ? <Skeleton variant="circular" width={200} height={200} sx={{ mx: 'auto' }} />
-                : pieData.length === 0
-                  ? <Box sx={{ py: 6, textAlign: 'center' }}>
-                      <Typography color="text.secondary" variant="body2">No expenses this month</Typography>
-                    </Box>
-                  : <ResponsiveContainer width="100%" height={260}>
-                      <PieChart>
-                        <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={100}
-                          dataKey="value" paddingAngle={2}>
-                          {pieData.map((entry, i) => (
-                            <Cell key={i} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(v) => fmt(v)} />
-                        <Legend iconType="circle" iconSize={8}
-                          formatter={(value) => <span style={{ fontSize: 12 }}>{value}</span>} />
-                      </PieChart>
-                    </ResponsiveContainer>
-              }
+              <Tabs value={chartTab} onChange={(_, v) => setChartTab(v)} sx={{ mb: 1 }}>
+                <Tab label="Spending" sx={{ fontSize: 13, minHeight: 40 }} />
+                <Tab label="Income"   sx={{ fontSize: 13, minHeight: 40 }} />
+              </Tabs>
+
+              {chartTab === 0 && (
+                <CategoryPieChart
+                  data={spendingPieData}
+                  loading={loading}
+                  emptyMessage="No expenses this month"
+                />
+              )}
+              {chartTab === 1 && (
+                <CategoryPieChart
+                  data={incomeByCategory}
+                  loading={incomeLoading}
+                  emptyMessage="No income recorded this month"
+                />
+              )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Personal funds (household view) */}
+        {/* Right panel */}
         {view === 'household' && (
           <Grid item xs={12} md={7}>
             <Card sx={{ height: '100%' }}>
@@ -215,7 +255,6 @@ export default function DashboardPage() {
           </Grid>
         )}
 
-        {/* Per-user personal (full view) */}
         {view === 'full' && data?.per_user_personal && (
           <Grid item xs={12} md={7}>
             <Card>
@@ -243,7 +282,6 @@ export default function DashboardPage() {
           </Grid>
         )}
 
-        {/* Personal breakdown */}
         {view === 'personal' && (
           <Grid item xs={12} md={7}>
             <Card>
@@ -283,7 +321,7 @@ export default function DashboardPage() {
       <TransactionDialog
         open={txOpen}
         onClose={() => setTxOpen(false)}
-        onSaved={() => setRefresh(r => r + 1)}
+        onSaved={() => {}}
       />
     </Box>
   )
