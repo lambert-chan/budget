@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box, Card, CardContent, TextField, Button,
@@ -10,20 +10,28 @@ import { login } from '../api'
 import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [showPw, setShowPw]     = useState(false)
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
-  const { setUser }             = useAuth()
-  const navigate                = useNavigate()
+  const [fields, setFields]   = useState({ email: '', password: '' })
+  const [showPw, setShowPw]   = useState(false)
+  const [error, setError]     = useState('')
+  const [loading, setLoading] = useState(false)
+  const { setUser }           = useAuth()
+  const navigate              = useNavigate()
+
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target
+    setFields(f => ({ ...f, [name]: value }))
+  }, [])
 
   const handleLogin = async (e) => {
     e.preventDefault()
+    if (!fields.email || !fields.password) {
+      setError('Please enter your email and password')
+      return
+    }
     setLoading(true)
     setError('')
     try {
-      const res = await login(email, password)
+      const res = await login(fields.email.trim(), fields.password)
       setUser(res.data.user)
       navigate('/')
     } catch (err) {
@@ -50,21 +58,40 @@ export default function LoginPage() {
             </Typography>
           </Box>
 
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} noValidate>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
-                label="Email" type="email" value={email}
-                onChange={e => setEmail(e.target.value)}
-                autoComplete="email" autoFocus fullWidth
+                label="Email"
+                name="email"
+                type="email"
+                value={fields.email}
+                onChange={handleChange}
+                autoComplete="email"
+                fullWidth
+                inputProps={{
+                  inputMode: 'email',
+                  autoCapitalize: 'none',
+                  autoCorrect: 'off',
+                  spellCheck: false,
+                }}
               />
               <TextField
-                label="Password" type={showPw ? 'text' : 'password'}
-                value={password} onChange={e => setPassword(e.target.value)}
-                autoComplete="current-password" fullWidth
+                label="Password"
+                name="password"
+                type={showPw ? 'text' : 'password'}
+                value={fields.password}
+                onChange={handleChange}
+                autoComplete="current-password"
+                fullWidth
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowPw(p => !p)}>
+                      <IconButton
+                        size="small"
+                        onMouseDown={e => e.preventDefault()}
+                        onClick={() => setShowPw(p => !p)}
+                        edge="end"
+                      >
                         {showPw
                           ? <VisibilityOffRoundedIcon fontSize="small" />
                           : <VisibilityRoundedIcon fontSize="small" />}
@@ -73,10 +100,15 @@ export default function LoginPage() {
                   ),
                 }}
               />
-              {error && <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>}
+              {error && (
+                <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
+              )}
               <Button
-                type="submit" variant="contained" size="large"
-                disabled={loading} sx={{ mt: 1 }}
+                type="submit"
+                variant="contained"
+                size="large"
+                disabled={loading}
+                sx={{ mt: 1 }}
               >
                 {loading ? 'Signing in…' : 'Sign in'}
               </Button>
