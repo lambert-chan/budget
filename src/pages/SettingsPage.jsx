@@ -3,8 +3,7 @@ import {
   Box, Typography, Card, CardContent, Stack, Button,
   TextField, Divider, Alert, InputAdornment, Avatar,
   Dialog, DialogTitle, DialogContent, DialogActions,
-  FormControl, InputLabel, Select, MenuItem, IconButton,
-  ToggleButtonGroup, ToggleButton, Chip,
+  IconButton, ToggleButtonGroup, ToggleButton, Chip,
 } from '@mui/material'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
@@ -14,19 +13,12 @@ import {
   getCategories, createCategory, deleteCategory,
 } from '../api'
 
-// ── Colour options ────────────────────────────────────────────────────────────
-const COLOURS = [
-  '#1D9E75', '#0F6E56', '#378ADD', '#185FA5', '#534AB7',
-  '#7F77DD', '#BA7517', '#D85A30', '#993C1D', '#639922',
-  '#D4537E', '#993556', '#ED93B1', '#888780', '#E74C3C',
-]
-
 // ── Add category dialog ───────────────────────────────────────────────────────
 function AddCategoryDialog({ open, onClose, onSaved }) {
   const [name, setName]     = useState('')
   const [type, setType]     = useState('expense')
   const [scope, setScope]   = useState('shared')
-  const [color, setColor]   = useState(COLOURS[0])
+  const [color, setColor]   = useState('#1D9E75')
   const [saving, setSaving] = useState(false)
   const [error, setError]   = useState('')
 
@@ -37,7 +29,7 @@ function AddCategoryDialog({ open, onClose, onSaved }) {
       await createCategory({ name: name.trim(), type, scope, color })
       onSaved()
       onClose()
-      setName(''); setType('expense'); setScope('shared'); setColor(COLOURS[0]); setError('')
+      setName(''); setType('expense'); setScope('shared'); setColor('#1D9E75'); setError('')
     } catch (e) {
       setError(e.response?.data?.error || 'Failed to create category')
     } finally { setSaving(false) }
@@ -75,22 +67,38 @@ function AddCategoryDialog({ open, onClose, onSaved }) {
             </ToggleButtonGroup>
           </Box>
 
+          {/* Native colour picker */}
           <Box>
             <Typography variant="caption" color="text.secondary" mb={0.75} display="block">
               Colour
             </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {COLOURS.map(c => (
-                <Box key={c} onClick={() => setColor(c)} sx={{
-                  width: 28, height: 28, borderRadius: '50%', bgcolor: c,
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                component="input"
+                type="color"
+                value={color}
+                onChange={e => setColor(e.target.value)}
+                sx={{
+                  width: 48, height: 48,
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: 2,
                   cursor: 'pointer',
-                  outline: color === c ? '3px solid' : '2px solid transparent',
-                  outlineColor: color === c ? 'text.primary' : 'transparent',
-                  outlineOffset: 2,
-                  transition: 'transform 0.1s',
-                  '&:hover': { transform: 'scale(1.15)' },
-                }} />
-              ))}
+                  padding: '2px',
+                  bgcolor: 'background.paper',
+                  '&::-webkit-color-swatch-wrapper': { padding: 0 },
+                  '&::-webkit-color-swatch': { borderRadius: 1, border: 'none' },
+                }}
+              />
+              <Box>
+                <Typography variant="body2" fontWeight={500}>{color.toUpperCase()}</Typography>
+                <Typography variant="caption" color="text.secondary">Click to open colour picker</Typography>
+              </Box>
+              <Box sx={{
+                width: 32, height: 32, borderRadius: '50%',
+                bgcolor: color, border: '2px solid',
+                borderColor: 'divider', ml: 'auto',
+              }} />
             </Box>
           </Box>
 
