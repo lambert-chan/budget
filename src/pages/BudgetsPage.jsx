@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import {
   Box, Typography, Card, CardContent, Grid, LinearProgress,
-  Button, TextField, Stack, Skeleton, Chip, Dialog,
+  Button, Stack, Skeleton, Chip, Dialog,
   DialogTitle, DialogContent, DialogActions, MenuItem,
-  Select, FormControl, InputLabel, InputAdornment,
+  Select, FormControl, InputLabel, InputAdornment, IconButton,
+  Tooltip,
 } from '@mui/material'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
 import { getBudgets, saveBudget, deleteBudget, getCategories } from '../api'
 import dayjs from 'dayjs'
 
@@ -14,7 +16,7 @@ const fmt = (n) => new Intl.NumberFormat('en-CA', {
 }).format(n || 0)
 
 function BudgetCard({ budget, onDelete }) {
-  const pct = Math.min((budget.spent / budget.amount) * 100, 100) || 0
+  const pct  = Math.min((budget.spent / budget.amount) * 100, 100) || 0
   const over = budget.spent > budget.amount
   return (
     <Card>
@@ -24,7 +26,14 @@ function BudgetCard({ budget, onDelete }) {
             <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: budget.color, flexShrink: 0 }} />
             <Typography variant="body1" fontWeight={500}>{budget.category_name}</Typography>
           </Box>
-          {over && <Chip label="Over budget" color="error" size="small" sx={{ fontSize: 10 }} />}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {over && <Chip label="Over budget" color="error" size="small" sx={{ fontSize: 10 }} />}
+            <Tooltip title="Delete budget">
+              <IconButton size="small" color="error" onClick={() => onDelete(budget.id)}>
+                <DeleteRoundedIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
         <LinearProgress
           variant="determinate" value={pct}
@@ -40,7 +49,9 @@ function BudgetCard({ budget, onDelete }) {
           </Typography>
         </Box>
         <Typography variant="caption" color={over ? 'error.main' : 'text.secondary'}>
-          {over ? `${fmt(budget.spent - budget.amount)} over` : `${fmt(budget.amount - budget.spent)} remaining`}
+          {over
+            ? `${fmt(budget.spent - budget.amount)} over`
+            : `${fmt(budget.amount - budget.spent)} remaining`}
         </Typography>
       </CardContent>
     </Card>
@@ -87,9 +98,18 @@ function AddBudgetDialog({ open, onClose, onSaved, month }) {
               ))}
             </Select>
           </FormControl>
-          <TextField label="Monthly limit" type="number" value={amount}
-            onChange={e => setAmount(e.target.value)} size="small" fullWidth
-            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+          <Box
+            component="input"
+            type="number"
+            placeholder="Monthly limit"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            style={{
+              width: '100%', padding: '8px 12px', fontSize: 14,
+              border: '1px solid rgba(128,128,128,0.3)', borderRadius: 8,
+              background: 'transparent', color: 'inherit', fontFamily: 'inherit',
+              outline: 'none',
+            }}
           />
         </Stack>
       </DialogContent>
@@ -116,8 +136,14 @@ export default function BudgetsPage() {
 
   useEffect(() => { load() }, [month])
 
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this budget?')) return
+    await deleteBudget(id)
+    load()
+  }
+
   const totalBudget = budgets.reduce((s, b) => s + parseFloat(b.amount), 0)
-  const totalSpent  = budgets.reduce((s, b) => s + parseFloat(b.spent), 0)
+  const totalSpent  = budgets.reduce((s, b) => s + parseFloat(b.spent),  0)
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1100, mx: 'auto' }}>
@@ -179,7 +205,7 @@ export default function BudgetsPage() {
               </Grid>
             : budgets.map(b => (
                 <Grid item xs={12} sm={6} md={4} key={b.id}>
-                  <BudgetCard budget={b} onDelete={() => deleteBudget(b.id).then(load)} />
+                  <BudgetCard budget={b} onDelete={handleDelete} />
                 </Grid>
               ))
         }
