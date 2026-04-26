@@ -11,7 +11,13 @@ api.interceptors.response.use(
   res => res,
   err => {
     if (err.response?.status === 401) {
-      window.location.href = '/login'
+      const onLoginPage = window.location.pathname === '/login'
+      const isAuthRequest = err.config?.url?.includes('/auth/')
+
+      // Let the login screen handle its own auth failures instead of forcing a full reload loop.
+      if (!onLoginPage && !isAuthRequest) {
+        window.location.replace('/login')
+      }
     }
     return Promise.reject(err)
   }
