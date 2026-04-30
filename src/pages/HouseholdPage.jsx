@@ -41,9 +41,10 @@ export default function HouseholdPage() {
           <input type="month" value={month}
             onChange={e => setMonth(e.target.value)}
             style={{
-              border: '1px solid rgba(0,0,0,0.23)', borderRadius: 8,
+              border: '1px solid rgba(128,128,128,0.4)', borderRadius: 8,
               padding: '6px 10px', fontSize: 14, fontFamily: 'inherit',
               background: 'transparent', color: 'inherit',
+              colorScheme: 'light dark'
             }}
           />
           <Button variant="contained" startIcon={<AddRoundedIcon />}
