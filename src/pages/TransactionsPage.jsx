@@ -28,6 +28,7 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import FilterListRoundedIcon from "@mui/icons-material/FilterListRounded";
+import FileDownloadRoundedIcon from "@mui/icons-material/FileDownloadRounded";
 import { getTransactions, deleteTransaction, getCategories } from "../api";
 import TransactionDialog from "../components/shared/TransactionDialog";
 import dayjs from "dayjs";
@@ -37,6 +38,43 @@ const fmt = (n) =>
     style: "currency",
     currency: "CAD",
   }).format(n || 0);
+
+function exportToCSV(transactions, filters) {
+  const headers = [
+    "Date",
+    "Description",
+    "Category",
+    "Type",
+    "Scope",
+    "Added By",
+    "Amount",
+  ];
+
+  const rows = transactions.map((tx) => [
+    dayjs(tx.date).format("YYYY-MM-DD"),
+    tx.description || "",
+    tx.category_name || "",
+    tx.type,
+    tx.scope,
+    tx.created_by_name || "",
+    tx.type === "income" ? tx.amount : -tx.amount,
+  ]);
+
+  const csv = [headers, ...rows]
+    .map((row) =>
+      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","),
+    )
+    .join("\n");
+
+  const filename = `transactions_${filters.from}_to_${filters.to}.csv`;
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
@@ -50,8 +88,8 @@ export default function TransactionsPage() {
   const [categoryId, setCategoryId] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [exporting, setExporting] = useState(false);
 
-  // Load categories for the filter dropdown
   useEffect(() => {
     getCategories().then((r) => setCategories(r.data));
   }, []);
@@ -85,6 +123,21 @@ export default function TransactionsPage() {
     setDialogOpen(true);
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      // Fetch all matching transactions (no limit) for the export
+      const params = { view, from, to, limit: 9999 };
+      if (categoryId) params.category_id = categoryId;
+      const res = await getTransactions(params);
+      exportToCSV(res.data, { from, to });
+    } catch (e) {
+      console.error("Export failed", e);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const clearFilters = () => {
     setFrom(dayjs().startOf("month").format("YYYY-MM-DD"));
     setTo(dayjs().format("YYYY-MM-DD"));
@@ -108,14 +161,25 @@ export default function TransactionsPage() {
         <Typography variant="h5" fontWeight={600}>
           Transactions
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddRoundedIcon />}
-          onClick={handleAdd}
-          size="small"
-        >
-          Add
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            startIcon={<FileDownloadRoundedIcon />}
+            onClick={handleExport}
+            disabled={exporting || loading || transactions.length === 0}
+            size="small"
+          >
+            {exporting ? "Exporting…" : "Export CSV"}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddRoundedIcon />}
+            onClick={handleAdd}
+            size="small"
+          >
+            Add
+          </Button>
+        </Stack>
       </Box>
 
       {/* Filters */}
@@ -129,7 +193,6 @@ export default function TransactionsPage() {
             alignItems: "center",
           }}
         >
-          {/* Scope view */}
           <ToggleButtonGroup
             value={view}
             exclusive
@@ -141,7 +204,6 @@ export default function TransactionsPage() {
             <ToggleButton value="all">All</ToggleButton>
           </ToggleButtonGroup>
 
-          {/* Date range */}
           <TextField
             label="From"
             type="date"
@@ -161,7 +223,6 @@ export default function TransactionsPage() {
             sx={{ width: 150 }}
           />
 
-          {/* Category filter */}
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel>Category</InputLabel>
             <Select
@@ -178,7 +239,6 @@ export default function TransactionsPage() {
               <MenuItem value="">
                 <em>All categories</em>
               </MenuItem>
-              {/* Group by type */}
               {["income", "expense"].map((type) => {
                 const filtered = categories.filter((c) => c.type === type);
                 if (!filtered.length) return null;
@@ -218,7 +278,6 @@ export default function TransactionsPage() {
             </Select>
           </FormControl>
 
-          {/* Clear filters */}
           {hasActiveFilters && (
             <Button
               size="small"
@@ -231,19 +290,16 @@ export default function TransactionsPage() {
           )}
         </Box>
 
-        {/* Active filter chips */}
         {categoryId && (
           <Box
             sx={{ px: 2, pb: 1.5, display: "flex", gap: 1, flexWrap: "wrap" }}
           >
-            {categoryId && (
-              <Chip
-                size="small"
-                label={`Category: ${categories.find((c) => c.id == categoryId)?.name || ""}`}
-                onDelete={() => setCategoryId("")}
-                sx={{ fontSize: 12 }}
-              />
-            )}
+            <Chip
+              size="small"
+              label={`Category: ${categories.find((c) => c.id == categoryId)?.name || ""}`}
+              onDelete={() => setCategoryId("")}
+              sx={{ fontSize: 12 }}
+            />
           </Box>
         )}
       </Card>
