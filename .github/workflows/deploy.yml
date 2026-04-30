@@ -41,4 +41,4 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
-            .htaccess          # exclude so your Passenger .htaccess is never overwritten
+            .htaccess
