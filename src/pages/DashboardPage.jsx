@@ -92,8 +92,8 @@ export default function DashboardPage() {
   }, [view, month])
 
   const spendingPieData = (data?.by_category || [])
-    .filter(c => Number.parseFloat(c.total_cad) > 0)
-    .map(c => ({ name: c.name, value: Number.parseFloat(c.total_cad), color: c.color }))
+    .filter(c => parseFloat(c.total_cad) > 0)
+    .map(c => ({ name: c.label || c.name, value: parseFloat(c.total_cad), color: c.color }))
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1100, mx: 'auto' }}>
