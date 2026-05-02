@@ -23,8 +23,8 @@ export default function HouseholdPage() {
   const { data, loading } = useSummary('household', month)
 
   const barData = (data?.by_category || []).slice(0, 8).map(c => ({
-    name: c.name.length > 12 ? c.name.slice(0, 12) + '…' : c.name,
-    amount: parseFloat(c.total),
+    name: (c.label || c.name).length > 12 ? (c.label || c.name).slice(0, 12) + '…' : (c.label || c.name),
+    amount: parseFloat(c.total_cad),
     color: c.color,
   }))
 
@@ -159,10 +159,15 @@ export default function HouseholdPage() {
                   <Box key={c.name} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 0.5 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: c.color }} />
-                      <Typography variant="body2">{c.name}</Typography>
+                      <Typography variant="body2">{c.label || c.name}</Typography>
                     </Box>
                     <Typography variant="body2" fontWeight={500} color="error.main">
-                      {fmt(c.total)}
+                      {fmt(c.total_cad)}
+                      {c.currency !== 'CAD' && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {c.total_original} {c.currency}
+                        </Typography>
+                      )}
                     </Typography>
                   </Box>
                 ))}
