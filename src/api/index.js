@@ -88,3 +88,10 @@ export const updateAllocation = (userId, data) =>
   api.put(`/allocations/${userId}`, data)
 
 export default api
+
+// ── Exchange rates ─────────────────────────────────────────────────────────────
+export const getExchangeRates = () => api.get('/exchange-rates')
+
+export const saveExchangeRate = (data) => api.post('/exchange-rates', data)
+
+export const deleteExchangeRate = (currency) => api.delete(`/exchange-rates/${currency}`)
