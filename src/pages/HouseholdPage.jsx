@@ -89,7 +89,7 @@ export default function HouseholdPage() {
                 ? <Box sx={{ py: 6, textAlign: 'center' }}>
                     <Typography color="text.secondary" variant="body2">No shared expenses this month</Typography>
                   </Box>
-                : <ResponsiveContainer width="100%" height={260}>
+                : <ResponsiveContainer width="100%" height={300}>
                     <BarChart data={barData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(128,128,128,0.1)" />
                       <XAxis dataKey="name" tick={{ fontSize: 11 }} />
