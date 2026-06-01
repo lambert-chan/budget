@@ -208,7 +208,8 @@ export default function TransactionsPage() {
                       return (
                         <TableRow key={tx.id} hover>
                           <TableCell sx={{ color: 'text.secondary', fontSize: 13 }}>
-                            {dayjs(tx.date).format('MMM D')}
+                            {/** Add 1 day to account for adjustment */}
+                            {dayjs(tx.date).add(1, 'day').format('MMM D')}
                           </TableCell>
                           <TableCell sx={{ maxWidth: 180 }}>
                             <Typography variant="body2" noWrap>{tx.description || '—'}</Typography>
