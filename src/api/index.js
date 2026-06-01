@@ -1,97 +1,150 @@
 import axios from 'axios'
+import * as mockApi from './mock'
 
-const api = axios.create({
-  baseURL: 'https://lambertchan.ca/budget-api/api',
+export const useMockApi =
+  import.meta.env.DEV && import.meta.env.VITE_USE_MOCK_DATA !== 'false'
+
+export const mockUser = mockApi.mockUser
+
+const apiBaseURL =
+  import.meta.env.VITE_API_BASE_URL ??
+  'https://lambertchan.ca/budget-api/api'
+
+const realApi = axios.create({
+  baseURL: apiBaseURL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Auto-redirect to login on 401
-api.interceptors.response.use(
-  res => res,
-  err => {
-    if (err.response?.status === 401) {
-      const onLoginPage = window.location.pathname === '/login'
-      const isAuthRequest = err.config?.url?.includes('/auth/')
+if (!useMockApi) {
+  realApi.interceptors.response.use(
+    res => res,
+    err => {
+      if (err.response?.status === 401) {
+        const onLoginPage = window.location.pathname === '/login'
+        const isAuthRequest = err.config?.url?.includes('/auth/')
 
-      // Let the login screen handle its own auth failures instead of forcing a full reload loop.
-      if (!onLoginPage && !isAuthRequest) {
-        window.location.replace('/login')
+        if (!onLoginPage && !isAuthRequest) {
+          window.location.replace('/login')
+        }
       }
+      return Promise.reject(err)
     }
-    return Promise.reject(err)
-  }
-)
+  )
+}
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
-export const login = (email, password) =>
-  api.post('/auth/login', { email, password })
+const api = useMockApi ? mockApi.api : realApi
 
-export const logout = () => api.post('/auth/logout')
+export const login = useMockApi
+  ? mockApi.login
+  : (email, password) => realApi.post('/auth/login', { email, password })
 
-export const getMe = () => api.get('/auth/me')
+export const logout = useMockApi
+  ? mockApi.logout
+  : () => realApi.post('/auth/logout')
 
-export const updateMe = (data) => api.put('/auth/me', data)
+export const getMe = useMockApi
+  ? mockApi.getMe
+  : () => realApi.get('/auth/me')
 
-// ── Transactions ──────────────────────────────────────────────────────────────
-export const getTransactions = (params) =>
-  api.get('/transactions', { params })
+export const updateMe = useMockApi
+  ? mockApi.updateMe
+  : (data) => realApi.put('/auth/me', data)
 
-export const getTransaction = (id) => api.get(`/transactions/${id}`)
+export const getTransactions = useMockApi
+  ? mockApi.getTransactions
+  : (params) => realApi.get('/transactions', { params })
 
-export const createTransaction = (data) => api.post('/transactions', data)
+export const getTransaction = useMockApi
+  ? mockApi.getTransaction
+  : (id) => realApi.get(`/transactions/${id}`)
 
-export const updateTransaction = (id, data) => api.put(`/transactions/${id}`, data)
+export const createTransaction = useMockApi
+  ? mockApi.createTransaction
+  : (data) => realApi.post('/transactions', data)
 
-export const deleteTransaction = (id) => api.delete(`/transactions/${id}`)
+export const updateTransaction = useMockApi
+  ? mockApi.updateTransaction
+  : (id, data) => realApi.put(`/transactions/${id}`, data)
 
-// ── Summary ───────────────────────────────────────────────────────────────────
-export const getHouseholdSummary = (month) =>
-  api.get('/summary/household', { params: { month } })
+export const deleteTransaction = useMockApi
+  ? mockApi.deleteTransaction
+  : (id) => realApi.delete(`/transactions/${id}`)
 
-export const getPersonalSummary = (month) =>
-  api.get('/summary/personal', { params: { month } })
+export const getHouseholdSummary = useMockApi
+  ? mockApi.getHouseholdSummary
+  : (month) => realApi.get('/summary/household', { params: { month } })
 
-export const getFullSummary = (month) =>
-  api.get('/summary/full', { params: { month } })
+export const getPersonalSummary = useMockApi
+  ? mockApi.getPersonalSummary
+  : (month) => realApi.get('/summary/personal', { params: { month } })
 
-// ── Accounts ──────────────────────────────────────────────────────────────────
-export const getAccounts = () => api.get('/accounts')
+export const getFullSummary = useMockApi
+  ? mockApi.getFullSummary
+  : (month) => realApi.get('/summary/full', { params: { month } })
 
-export const createAccount = (data) => api.post('/accounts', data)
+export const getAccounts = useMockApi
+  ? mockApi.getAccounts
+  : () => realApi.get('/accounts')
 
-export const updateAccount = (id, data) => api.put(`/accounts/${id}`, data)
+export const createAccount = useMockApi
+  ? mockApi.createAccount
+  : (data) => realApi.post('/accounts', data)
 
-export const deleteAccount = (id) => api.delete(`/accounts/${id}`)
+export const updateAccount = useMockApi
+  ? mockApi.updateAccount
+  : (id, data) => realApi.put(`/accounts/${id}`, data)
 
-// ── Categories ────────────────────────────────────────────────────────────────
-export const getCategories = (params) =>
-  api.get('/categories', { params })
+export const deleteAccount = useMockApi
+  ? mockApi.deleteAccount
+  : (id) => realApi.delete(`/accounts/${id}`)
 
-export const createCategory = (data) => api.post('/categories', data)
+export const getCategories = useMockApi
+  ? mockApi.getCategories
+  : (params) => realApi.get('/categories', { params })
 
-export const updateCategory = (id, data) => api.put(`/categories/${id}`, data)
+export const createCategory = useMockApi
+  ? mockApi.createCategory
+  : (data) => realApi.post('/categories', data)
 
-export const deleteCategory = (id) => api.delete(`/categories/${id}`)
+export const updateCategory = useMockApi
+  ? mockApi.updateCategory
+  : (id, data) => realApi.put(`/categories/${id}`, data)
 
-// ── Budgets ───────────────────────────────────────────────────────────────────
-export const getBudgets = (params) => api.get('/budgets', { params })
+export const deleteCategory = useMockApi
+  ? mockApi.deleteCategory
+  : (id) => realApi.delete(`/categories/${id}`)
 
-export const saveBudget = (data) => api.post('/budgets', data)
+export const getBudgets = useMockApi
+  ? mockApi.getBudgets
+  : (params) => realApi.get('/budgets', { params })
 
-export const deleteBudget = (id) => api.delete(`/budgets/${id}`)
+export const saveBudget = useMockApi
+  ? mockApi.saveBudget
+  : (data) => realApi.post('/budgets', data)
 
-// ── Allocations ───────────────────────────────────────────────────────────────
-export const getAllocations = () => api.get('/allocations')
+export const deleteBudget = useMockApi
+  ? mockApi.deleteBudget
+  : (id) => realApi.delete(`/budgets/${id}`)
 
-export const updateAllocation = (userId, data) =>
-  api.put(`/allocations/${userId}`, data)
+export const getAllocations = useMockApi
+  ? mockApi.getAllocations
+  : () => realApi.get('/allocations')
+
+export const updateAllocation = useMockApi
+  ? mockApi.updateAllocation
+  : (userId, data) => realApi.put(`/allocations/${userId}`, data)
+
+export const getExchangeRates = useMockApi
+  ? mockApi.getExchangeRates
+  : () => realApi.get('/exchange-rates')
+
+export const saveExchangeRate = useMockApi
+  ? mockApi.saveExchangeRate
+  : (data) => realApi.post('/exchange-rates', data)
+
+export const deleteExchangeRate = useMockApi
+  ? mockApi.deleteExchangeRate
+  : (currency) => realApi.delete(`/exchange-rates/${currency}`)
 
 export default api
-
-// ── Exchange rates ─────────────────────────────────────────────────────────────
-export const getExchangeRates = () => api.get('/exchange-rates')
-
-export const saveExchangeRate = (data) => api.post('/exchange-rates', data)
-
-export const deleteExchangeRate = (currency) => api.delete(`/exchange-rates/${currency}`)

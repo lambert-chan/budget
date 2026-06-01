@@ -16,6 +16,8 @@ npm run dev
 
 This frontend is configured to call the live backend at `https://lambertchan.ca/budget-api`.
 
+For local development, the app now runs against a built-in mock API by default so you can work on UI without database or auth setup. Set `VITE_USE_MOCK_DATA=false` to switch back to the real backend, or set `VITE_API_BASE_URL` to point at a different API.
+
 ---
 
 ## Building for production
@@ -36,7 +38,7 @@ This outputs static files to `/dist`.
 4. Upload **all contents** of the `/dist` folder (not the folder itself — the files inside it)
 5. Also upload `public/.htaccess` to the same location
 
-The frontend will call the API at `https://lambertchan.ca/budget-api`.
+The frontend will call the API at `https://lambertchan.ca/budget-api` in production, unless `VITE_API_BASE_URL` is set.
 
 ---
 

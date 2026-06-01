@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box, Card, CardContent, TextField, Button,
@@ -14,8 +14,14 @@ export default function LoginPage() {
   const [showPw, setShowPw]   = useState(false)
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
-  const { setUser }           = useAuth()
+  const { user, setUser }     = useAuth()
   const navigate              = useNavigate()
+
+  useEffect(() => {
+    if (user) {
+      navigate('/', { replace: true })
+    }
+  }, [user, navigate])
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target
