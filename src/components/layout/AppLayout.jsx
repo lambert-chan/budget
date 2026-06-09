@@ -14,17 +14,19 @@ import HomeRoundedIcon from '@mui/icons-material/HomeRounded'
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded'
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded'
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded'
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded'
 import { useAuth } from '../../context/AuthContext'
 
 const DRAWER_WIDTH = 240
 
 const navItems = [
-  { label: 'Dashboard',    icon: <DashboardRoundedIcon />,             path: '/' },
-  { label: 'Transactions', icon: <ReceiptLongRoundedIcon />,           path: '/transactions' },
-  { label: 'Budgets',      icon: <PieChartRoundedIcon />,              path: '/budgets' },
-  { label: 'Household',    icon: <HomeRoundedIcon />,                  path: '/household' },
-  { label: 'Accounts',     icon: <AccountBalanceWalletRoundedIcon />,  path: '/accounts' },
-  { label: 'Settings',     icon: <SettingsRoundedIcon />,              path: '/settings' },
+  { label: 'Dashboard',       icon: <DashboardRoundedIcon />,            path: '/' },
+  { label: 'Transactions',    icon: <ReceiptLongRoundedIcon />,          path: '/transactions' },
+  { label: 'Yearly Summary',  icon: <CalendarMonthRoundedIcon />,        path: '/yearly' },
+  { label: 'Budgets',         icon: <PieChartRoundedIcon />,             path: '/budgets' },
+  { label: 'Household',       icon: <HomeRoundedIcon />,                 path: '/household' },
+  { label: 'Accounts',        icon: <AccountBalanceWalletRoundedIcon />, path: '/accounts' },
+  { label: 'Settings',        icon: <SettingsRoundedIcon />,             path: '/settings' },
 ]
 
 function SidebarContent({ onNav }) {

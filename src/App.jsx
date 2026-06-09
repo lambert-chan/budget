@@ -12,6 +12,7 @@ import BudgetsPage from './pages/BudgetsPage'
 import HouseholdPage from './pages/HouseholdPage'
 import AccountsPage from './pages/AccountsPage'
 import SettingsPage from './pages/SettingsPage'
+import YearlySummaryPage from './pages/YearlySummaryPage'
 
 function ThemedApp() {
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)')
@@ -32,6 +33,7 @@ function ThemedApp() {
                 <Route path="household" element={<HouseholdPage />} />
                 <Route path="accounts" element={<AccountsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
+                <Route path="yearly" element={<YearlySummaryPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
