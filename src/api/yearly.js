@@ -31,8 +31,8 @@ export async function getYearlySummary(year, view = 'all') {
   }
 
   txs.forEach((tx) => {
-    const amt     = tx.amount_cad || 0
-    const monthKey = dayjs(tx.date).format('YYYY-MM')
+    const amt     = Number(tx.amount_cad) || 0
+    const monthKey = (tx.date || '').substring(0, 7)
 
     if (tx.type === 'income') {
       income = round2(income + amt)
@@ -79,7 +79,7 @@ export function getAvailableYears(transactions = []) {
     return Array.from({ length: 5 }, (_, i) => current - i)
   }
   const earliest = transactions.reduce((min, tx) => {
-    const y = dayjs(tx.date).year()
+    const y = tx.date ? Number(tx.date.substring(0, 4)) : current
     return y < min ? y : min
   }, current)
   const years = []

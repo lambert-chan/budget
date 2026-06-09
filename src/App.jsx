@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useMemo } from 'react'
 import { ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { buildTheme } from './theme'
 import { AuthProvider } from './context/AuthContext'
 import RequireAuth from './components/layout/RequireAuth'
@@ -21,6 +23,7 @@ function ThemedApp() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
       <AuthProvider>
         <BrowserRouter>
           <Routes>
@@ -40,6 +43,7 @@ function ThemedApp() {
           </Routes>
         </BrowserRouter>
       </AuthProvider>
+      </LocalizationProvider>
     </ThemeProvider>
   )
 }

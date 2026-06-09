@@ -6,6 +6,7 @@ import {
   Avatar, Skeleton, Tooltip, FormControl, InputLabel,
   Select, MenuItem,
 } from '@mui/material'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import AddRoundedIcon from '@mui/icons-material/AddRounded'
 import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded'
@@ -121,12 +122,12 @@ export default function TransactionsPage() {
             <ToggleButton value="personal">👤 Mine</ToggleButton>
             <ToggleButton value="all">All</ToggleButton>
           </ToggleButtonGroup>
-          <TextField label="From" type="date" size="small" value={from}
-            onChange={e => setFrom(e.target.value)}
-            InputLabelProps={{ shrink: true }} sx={{ width: 150 }} />
-          <TextField label="To" type="date" size="small" value={to}
-            onChange={e => setTo(e.target.value)}
-            InputLabelProps={{ shrink: true }} sx={{ width: 150 }} />
+          <DatePicker label="From" value={dayjs(from)}
+            onChange={v => setFrom(v.format('YYYY-MM-DD'))}
+            slotProps={{ textField: { size: 'small', sx: { width: 150 } } }} />
+          <DatePicker label="To" value={dayjs(to)}
+            onChange={v => setTo(v.format('YYYY-MM-DD'))}
+            slotProps={{ textField: { size: 'small', sx: { width: 150 } } }} />
           <FormControl size="small" sx={{ minWidth: 180 }}>
             <InputLabel>Category</InputLabel>
             <Select value={categoryId} label="Category"
