@@ -7,6 +7,7 @@ import {
 } from '@mui/material'
 import { createTransaction, updateTransaction, getCategories, getAccounts, getExchangeRates } from '../../api'
 import dayjs from 'dayjs'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 
 // Common ISO currency codes for autocomplete suggestions
 const COMMON_CURRENCIES = [
