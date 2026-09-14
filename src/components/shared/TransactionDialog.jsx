@@ -21,6 +21,9 @@ const defaultForm = {
   category_id: '', account_id: '',
 }
 
+// Default account to pre-select when adding a brand new transaction
+const DEFAULT_ACCOUNT_NAME = 'Joint Chequing'
+
 export default function TransactionDialog({ open, onClose, transaction, onSaved }) {
   const [form, setForm]             = useState(defaultForm)
   const [categories, setCategories] = useState([])
@@ -35,6 +38,12 @@ export default function TransactionDialog({ open, onClose, transaction, onSaved 
       setCategories(cats.data)
       setAccounts(accs.data)
       setRates(rts.data)
+      if (!transaction) {
+        const defaultAccount = accs.data.find(a => a.name === DEFAULT_ACCOUNT_NAME)
+        if (defaultAccount) {
+          setForm(f => ({ ...f, account_id: defaultAccount.id }))
+        }
+      }
     })
     if (transaction) {
       setForm({

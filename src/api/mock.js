@@ -41,7 +41,7 @@ const state = {
     { id: 8, name: 'Subscriptions', type: 'expense', scope: 'personal', color: '#8E7DBE' },
   ],
   accounts: [
-    { id: 1, name: 'Chequing', type: 'checking', balance: 4820.35, currency: 'CAD' },
+    { id: 1, name: 'Joint Chequing', type: 'checking', balance: 4820.35, currency: 'CAD' },
     { id: 2, name: 'Savings', type: 'savings', balance: 12940.0, currency: 'CAD' },
     { id: 3, name: 'Visa', type: 'credit', balance: 1240.22, currency: 'CAD' },
   ],
