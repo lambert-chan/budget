@@ -189,9 +189,6 @@ export default function TransactionDialog({ open, onClose, transaction, onSaved 
             onChange={e => set('description', e.target.value)} fullWidth />
 
           {/* Date */}
-          {/* <TextField label="Date" type="date" value={form.date}
-            onChange={e => set('date', e.target.value)}
-            InputLabelProps={{ shrink: true }} fullWidth /> */}
           <DatePicker label="Date" value={dayjs(form.date)}
             onChange={v => set('date', v.format('YYYY-MM-DD'))}
             slotProps={{ textField: { size: 'small' } }} />
